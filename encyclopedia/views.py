@@ -5,6 +5,8 @@ from markdown2 import Markdown
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
+entries = util.list_entries()
+
 def index(request):
     return render(request, "encyclopedia/index.html", {
         "entries": util.list_entries()
@@ -13,8 +15,42 @@ def index(request):
 def entry(request, title):
     markdownConverter = Markdown()
 
-    contents = markdownConverter.convert(util.get_entry(title))
-    return render(request, "encyclopedia/entry.html", {
-        "contents": contents,
-        "title": title
-    })
+    try:
+        markdown = util.get_entry(title)
+        if markdown != None:
+            contents = markdownConverter.convert(markdown)
+            return render(request, "encyclopedia/entry.html", {
+                "contents": contents,
+                "title": title
+            })
+        else:
+            raise FileNotFoundError
+    except FileNotFoundError:
+        return render(request, "encyclopedia/error.html")
+
+def search(request):
+    query = request.GET.get("query")
+    
+    # make all entries lowercase to make the search case-insensitive
+    entries_lc = []
+    for i in range(len(entries)):
+        entries_lc.append(entries[i].lower())
+
+    # if the query matches an entry perfectly (letter cases notwithstanding), redirect to that entry's page
+    if query.lower() in entries_lc:
+        i = entries_lc.index(query.lower())
+        return HttpResponseRedirect(reverse("entry", args=[entries[i]]))
+    # display entries that include the query as a substring if nothing matches perfectly
+    else:
+        candidates = []
+        for entry in entries_lc:
+            # if a string contains a substring (this search is also case-insensitive), then append to the list of candidate entries
+            if query.lower() in entry:
+                i = entries_lc.index(entry)
+                candidates.append(entries[i])
+
+        print(candidates)
+        return render(request, "encyclopedia/search.html", {
+            "results": candidates,
+            "query": query
+        })
