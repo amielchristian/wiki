@@ -1,10 +1,15 @@
 {% extends "encyclopedia/layout.html" %}
 
 {% block title %}
-    Article Not Found - Encyclopedia
+    Page Not Found - Encyclopedia
 {% endblock %}
 
 {% block body %}
-    <h1>The article you're looking for doesn't exist.</h1>
-    <p></p>
+    {% if error_code == 1 %}
+        <h1>The page you're looking for doesn't exist.</h1>
+        <p>This article doesn't exist. Maybe you can <a href="{% url 'create' %}">create it yourself!</a></p>
+    {% elif error_code == 2 %}
+        <h1>That page already exists.</h1>
+        <p>Looks like you tried to make a page with the same name as the existing article <a href="{% url 'entry' title=title%}">{{ title }}</a>. Consider editing it instead.</p>
+    {% endif %}
 {% endblock %}

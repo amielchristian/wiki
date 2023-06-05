@@ -26,7 +26,9 @@ def entry(request, title):
         else:
             raise FileNotFoundError
     except FileNotFoundError:
-        return render(request, "encyclopedia/error.html")
+        return render(request, "encyclopedia/error.html", {
+            "error_code": 1
+        })
 
 def search(request):
     query = request.GET.get("query")
@@ -49,8 +51,28 @@ def search(request):
                 i = entries_lc.index(entry)
                 candidates.append(entries[i])
 
-        print(candidates)
         return render(request, "encyclopedia/search.html", {
             "results": candidates,
             "query": query
         })
+    
+def create(request):
+    if request.method == "POST":
+        title = request.POST.get("title")
+        content = request.POST.get("content")
+
+        # create file
+        try:
+            f = open("entries/"+title+".md", "x")
+            f.write(content)
+            f.close()
+
+            return HttpResponseRedirect(reverse("entry", args=[title]))
+        except FileExistsError:
+            return render(request, "encyclopedia/error.html", {
+            "error_code": 2,
+            "title": title
+        })
+
+    return render(request, "encyclopedia/create.html")
+
