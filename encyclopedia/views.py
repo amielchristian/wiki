@@ -76,3 +76,32 @@ def create(request):
 
     return render(request, "encyclopedia/create.html")
 
+def edit(request, title):
+    # if this function is accessed through a form, then a valid edit request has been made
+    if request.method == "POST":
+        content = request.POST.get("content")
+
+        # overwrite file
+        f = open("entries/"+title+".md", "w")
+        f.write(content)
+        f.close()
+
+        return HttpResponseRedirect(reverse("entry", args=[title]))
+
+    else:
+        # check if an article with the given title actually exists
+        try:
+            contents = util.get_entry(title)
+
+            if contents != None:
+                return render(request, "encyclopedia/edit.html", {
+                    "title": title,
+                    "contents": contents
+                })
+            else:
+                raise FileNotFoundError
+        except FileNotFoundError:
+            return render(request, "encyclopedia/error.html", {
+            "error_code": 3,
+            "title": title
+        })
